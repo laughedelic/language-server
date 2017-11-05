@@ -22,6 +22,7 @@ class ScalametaLanguageServer(cwd: AbsolutePath,
   val ps = new PrintStream(out)
   val scalafixService = new ScalafixLintProvider(cwd, out, connection)
   val scalafmtService = new ScalafmtProvider(cwd, connection)
+  val symbolProvider = new SymbolProvider(cwd, connection)
 
   override def initialize(
       pid: Long,
@@ -30,7 +31,8 @@ class ScalametaLanguageServer(cwd: AbsolutePath,
     logger.info(s"Initialized with $cwd, $pid, $rootPath, $capabilities")
 
     ServerCapabilities(completionProvider = None,
-                       documentFormattingProvider = true)
+                       documentFormattingProvider = true,
+                       documentSymbolProvider = true)
   }
 
   def report(result: DiagnosticsReport): Unit = {
@@ -63,6 +65,10 @@ class ScalametaLanguageServer(cwd: AbsolutePath,
     val content = lines.mkString
     val formattedContent = scalafmtService.formatDocument(content)
     List(TextEdit(fullDocumentRange, formattedContent))
+  }
+
+  override def documentSymbols(td: TextDocumentIdentifier): Seq[SymbolInformation] = {
+    symbolProvider.symbolsForDocument(AbsolutePath(Paths.get(new URI(td.uri))))
   }
 
   override def onSaveTextDocument(td: TextDocumentIdentifier): Unit = {}
