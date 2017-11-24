@@ -9,13 +9,15 @@ stages:
 
 jobs:
   include:
-    - script: ./bin/scalafmt --test
+    - env: TEST="scalafmt"
+      script: ./bin/scalafmt --test
     # - script: sbt languageserver/test
-    - script: echo "TRAVIS_EVENT_TYPE=$TRAVIS_EVENT_TYPE"
+    - env: EVENT_TYPE=$TRAVIS_EVENT_TYPE
+      script: echo $TRAVIS_EVENT_TYPE
     - env: TEST="tests.ctags"
-      script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- $TEST'
+      script: sbt *:scalametaEnableCompletions "metaserver/testOnly -- $TEST"
     - env: TEST="tests.search"
-      script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- $TEST'
+      script: sbt *:scalametaEnableCompletions "metaserver/testOnly -- $TEST"
     # - script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- tests.storage'
     # - script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- tests.FormatterTest'
 
