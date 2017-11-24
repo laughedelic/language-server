@@ -3,30 +3,38 @@ jdk:
   - oraclejdk8
 
 stages:
-  - test
+  - name: test
   - name: release
-    if: branch = master
+    if: branch = travis-build-stages
 
 jobs:
   include:
-    - stage: test
-      script: ./bin/scalafmt --test
-    - stage: test
-      script: sbt "*:scalametaEnableCompletions" test
+    - script: ./bin/scalafmt --test
+    # - script: sbt languageserver/test
+    - script: echo "TRAVIS_EVENT_TYPE=$TRAVIS_EVENT_TYPE"
+    - env: TEST="tests.ctags"
+      script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- $TEST'
+    - env: TEST="tests.search"
+      script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- $TEST'
+    # - script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- tests.storage'
+    # - script: sbt *:scalametaEnableCompletions 'metaserver/testOnly -- tests.FormatterTest'
+
     - stage: release
       # only if HEAD is a merge commit or a tag:
-      script: '[[ "$(git rev-list --merges HEAD^..HEAD)" || "$TRAVIS_TAG" ]]'
-      deploy:
-        provider: script
-        script: sbt releaseEarly
+      script: >
+        if [[ "$(git rev-list --merges HEAD^..HEAD)" || "$TRAVIS_TAG" ]]; then
+            echo "release"
+        else
+            echo "push to master"
+        fi
 
 cache:
   directories:
-  - "$HOME/.sbt/0.13/dependency"
-  - "$HOME/.sbt/boot/scala*"
-  - "$HOME/.sbt/launchers"
-  - "$HOME/.ivy2/cache"
-  - "$HOME/.coursier"
+    - $HOME/.sbt/0.13/dependency
+    - $HOME/.sbt/boot/scala*
+    - $HOME/.sbt/launchers
+    - $HOME/.ivy2/cache
+    - $HOME/.coursier
 
 before_cache:
 - du -h -d 1 $HOME/.ivy2/cache
